@@ -1,14 +1,16 @@
 {
+  "$schema": "https://schemas.premid.app/metadata/1.5",
   "author": {
     "name": "Jack Hansen",
     "id": "140590672657776641"
   },
   "service": "KeyFM",
   "description": {
-    "en": "KeyFM.net is a non-profit radio community providing music around the globe, all day - every day."
+    "en": "KeyFM.net is a non-profit radio community providing music around the globe, all day - every day.",
+    "nl": "KeyFM.net is een non-profit radiocommunity die de hele dag muziek uitbrengt over de hele wereld, elke dag."
   },
   "url": "keyfm.net",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "logo": "https://i.imgur.com/0JYJS9v.png",
   "thumbnail": "https://i.imgur.com/Atd3RzK.png",
   "color": "#0085FF",

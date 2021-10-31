@@ -1,4 +1,5 @@
 {
+  "$schema": "https://schemas.premid.app/metadata/1.5",
   "author": {
     "name": "Eren",
     "id": "478937019758673931"
@@ -6,11 +7,12 @@
   "service": "Bundle Haber",
   "description": {
     "tr": "Tüm haberlerin toplandığı website.",
-    "en": "The fastest way to reach news."
+    "en": "The fastest way to reach news.",
+    "nl": "De snelste manier om nieuws te vinden."
   },
   "url": "www.bundlehaber.com",
-  "version": "1.4.6",
-  "logo": "https://i.imgur.com/fshr89j.png",
+  "version": "1.4.10",
+  "logo": "https://i.imgur.com/GJTDdHF.png",
   "thumbnail": "https://i.imgur.com/ntbbC9T.png",
   "color": "#BBBBBB",
   "tags": [

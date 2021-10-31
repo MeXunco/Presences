@@ -58,7 +58,7 @@ async function getStrings() {
       watchVideoButton: "general.buttonWatchVideo",
       viewChannelButton: "general.buttonViewChannel"
     },
-    await presence.getSetting("lang")
+    await presence.getSetting("lang").catch(() => "en")
   );
 }
 
@@ -67,15 +67,14 @@ let strings = getStrings(),
 
 presence.on("UpdateData", async () => {
   //* Update strings if user selected another language.
-  const newLang = await presence.getSetting("lang"),
+  const newLang = await presence.getSetting("lang").catch(() => "en"),
     privacy = await presence.getSetting("privacy"),
     time = await presence.getSetting("time"),
     vidDetail = await presence.getSetting("vidDetail"),
     vidState = await presence.getSetting("vidState"),
     buttons = await presence.getSetting("buttons");
-  if (!oldLang) {
-    oldLang = newLang;
-  } else if (oldLang !== newLang) {
+  oldLang ??= newLang;
+  if (oldLang !== newLang) {
     oldLang = newLang;
     strings = getStrings();
   }
@@ -135,8 +134,8 @@ presence.on("UpdateData", async () => {
       (uploader2 = document.querySelector("#owner-name a"));
 
     if (
-      uploaderMiniPlayer != null &&
-      uploaderMiniPlayer.textContent == "YouTube"
+      uploaderMiniPlayer !== null &&
+      uploaderMiniPlayer.textContent === "YouTube"
     ) {
       edited = true;
       uploaderMiniPlayer.setAttribute(
@@ -174,14 +173,15 @@ presence.on("UpdateData", async () => {
       document
         .querySelector("#playlist-actions .yt-icon-button#button")
         .getAttribute("aria-pressed")
-    )
+    ) {
       isPlaylistLoop =
         document
           .querySelector("#playlist-actions .yt-icon-button#button")
           .getAttribute("aria-pressed") === "true";
+    }
 
     let finalUploader =
-        edited == true
+        edited === true
           ? uploaderMiniPlayer.getAttribute("premid-value")
           : uploaderTV !== null
           ? typeof uploaderTV === "string"
@@ -191,13 +191,13 @@ presence.on("UpdateData", async () => {
           ? uploader
           : uploader.textContent,
       finalTitle =
-        title == null || title.textContent.replace(/\s+/g, "") == ""
+        title === null || title.textContent.replace(/\s+/g, "") === ""
           ? document.querySelector("div.ytp-title-text > a").textContent
           : title.textContent;
 
     //* YouTube Movies
     if (
-      title == null &&
+      title === null &&
       document.querySelector(
         ".title.style-scope.ytd-video-primary-info-renderer"
       ) !== null
@@ -207,46 +207,55 @@ presence.on("UpdateData", async () => {
       ).textContent;
     }
     if (
-      uploader == null &&
+      uploader === null &&
       document.querySelector(".style-scope.ytd-channel-name > a") !== null
     ) {
       finalUploader = document.querySelector(
         ".style-scope.ytd-channel-name > a"
       ).textContent;
     }
-
-    const presenceData: PresenceData = {
-      details: vidDetail
-        .replace("%title%", finalTitle)
-        .replace("%uploader%", finalUploader),
-      state: vidState
-        .replace("%title%", finalTitle)
-        .replace("%uploader%", finalUploader),
-      largeImageKey: "yt_lg",
-      smallImageKey: video.paused
-        ? "pause"
-        : video.loop
-        ? "repeat-one"
-        : isPlaylistLoop
-        ? "repeat"
-        : "play",
-      smallImageText: video.paused
-        ? (await strings).pause
-        : video.loop
-        ? "On loop"
-        : isPlaylistLoop
-        ? "Playlist on loop"
-        : (await strings).play,
-      startTimestamp: timestamps[0],
-      endTimestamp: timestamps[1]
-    };
+    const unlistedPathElement = document.querySelector<SVGPathElement>(
+        "g#privacy_unlisted > path"
+      ),
+      unlistedBadgeElement = document.querySelector<SVGPathElement>(
+        "h1.title+ytd-badge-supported-renderer path"
+      ),
+      unlistedVideo =
+        unlistedPathElement !== null &&
+        unlistedBadgeElement !== null &&
+        unlistedPathElement.getAttribute("d") ===
+          unlistedBadgeElement.getAttribute("d"),
+      presenceData: PresenceData = {
+        details: vidDetail
+          .replace("%title%", finalTitle)
+          .replace("%uploader%", finalUploader),
+        state: vidState
+          .replace("%title%", finalTitle)
+          .replace("%uploader%", finalUploader),
+        largeImageKey: "yt_lg",
+        smallImageKey: video.paused
+          ? "pause"
+          : video.loop
+          ? "repeat-one"
+          : isPlaylistLoop
+          ? "repeat"
+          : "play",
+        smallImageText: video.paused
+          ? (await strings).pause
+          : video.loop
+          ? "On loop"
+          : isPlaylistLoop
+          ? "Playlist on loop"
+          : (await strings).play,
+        endTimestamp: timestamps[1]
+      };
 
     if (vidState.includes("{0}")) delete presenceData.state;
 
     presence.setTrayTitle(
       video.paused
         ? ""
-        : finalTitle == null
+        : finalTitle === null
         ? document.querySelector(
             ".title.style-scope.ytd-video-primary-info-renderer"
           ).textContent
@@ -269,49 +278,48 @@ presence.on("UpdateData", async () => {
       presenceData.details = (await strings).ad;
       delete presenceData.state;
     } else if (privacy) {
-      if (live) {
-        presenceData.details = (await strings).watchLive;
-      } else {
-        presenceData.details = (await strings).watchVid;
-      }
+      if (live) presenceData.details = (await strings).watchLive;
+      else presenceData.details = (await strings).watchVid;
+
       delete presenceData.state;
       presenceData.startTimestamp = Math.floor(Date.now() / 1000);
       delete presenceData.endTimestamp;
     } else if (buttons) {
-      presenceData.buttons = [
-        {
-          label: live
-            ? (await strings).watchStreamButton
-            : (await strings).watchVideoButton,
-          url: document.URL.includes("/watch?v=")
-            ? document.URL.split("&")[0]
-            : `https://www.youtube.com/watch?v=${document
-                .querySelector("#page-manager > ytd-watch-flexy")
-                .getAttribute("video-id")}`
-        },
-        {
-          label: (await strings).viewChannelButton,
-          url: (document.querySelector(
-            "#top-row > ytd-video-owner-renderer > a"
-          ) as HTMLLinkElement).href
-        }
-      ];
+      if (!unlistedVideo) {
+        presenceData.buttons = [
+          {
+            label: live
+              ? (await strings).watchStreamButton
+              : (await strings).watchVideoButton,
+            url: document.URL.includes("/watch?v=")
+              ? document.URL.split("&")[0]
+              : `https://www.youtube.com/watch?v=${document
+                  .querySelector("#page-manager > ytd-watch-flexy")
+                  .getAttribute("video-id")}`
+          },
+          {
+            label: (await strings).viewChannelButton,
+            url: (
+              document.querySelector(
+                "#top-row > ytd-video-owner-renderer > a"
+              ) as HTMLLinkElement
+            ).href
+          }
+        ];
+      }
     }
-
     if (!time) {
       delete presenceData.startTimestamp;
       delete presenceData.endTimestamp;
     }
 
-    if (presenceData.details == null) {
+    if (!presenceData.details) {
       presence.setTrayTitle();
       presence.setActivity();
-    } else {
-      presence.setActivity(presenceData);
-    }
+    } else presence.setActivity(presenceData);
   } else if (
-    document.location.hostname == "www.youtube.com" ||
-    document.location.hostname == "youtube.com"
+    document.location.hostname === "www.youtube.com" ||
+    document.location.hostname === "youtube.com"
   ) {
     const presenceData: PresenceData = {
         largeImageKey: "yt_lg"
@@ -326,15 +334,16 @@ presence.on("UpdateData", async () => {
       search = document.querySelector(
         "#search-input > div > div:nth-child(2) > input"
       );
-      if (search == null) {
+      if (search === null)
         search = document.querySelector("#search-input > input");
-      }
+
       presenceData.details = (await strings).search;
       presenceData.state = search.value;
       presenceData.smallImageKey = "search";
       presenceData.startTimestamp = browsingStamp;
     } else if (
       document.location.pathname.includes("/channel") ||
+      document.location.pathname.includes("/c") ||
       document.location.pathname.includes("/user")
     ) {
       //Sometimes causes problems
@@ -346,9 +355,9 @@ presence.on("UpdateData", async () => {
           .includes(
             document.querySelector("#text.ytd-channel-name").textContent
           )
-      ) {
+      )
         user = document.querySelector("#text.ytd-channel-name").textContent;
-      } else if (
+      else if (
         /\(([^)]+)\)/.test(
           document.title.substr(0, document.title.lastIndexOf(" - YouTube"))
         )
@@ -364,7 +373,7 @@ presence.on("UpdateData", async () => {
       }
 
       // don't remove the second, includes an invisible character
-      if (user.replace(/\s+/g, "") == "" || user.replace(/\s+/g, "") == "‌")
+      if (user.replace(/\s+/g, "") === "" || user.replace(/\s+/g, "") === "‌")
         user = "null";
 
       if (document.location.pathname.includes("/videos")) {
@@ -386,7 +395,7 @@ presence.on("UpdateData", async () => {
         presenceData.startTimestamp = browsingStamp;
       } else if (document.location.pathname.includes("/search")) {
         searching = true;
-        const search = document.URL.split("search?query=")[1];
+        const [, search] = document.URL.split("search?query=");
         presenceData.details = (await strings).searchChannel.replace(
           "{0}",
           user
@@ -429,9 +438,8 @@ presence.on("UpdateData", async () => {
       presenceData.details = (await strings).viewPlaylist;
 
       let title: HTMLElement | null = document.querySelector("#text-displayed");
-      if (title == null) {
+      if (title === null)
         title = document.querySelector("#title > yt-formatted-string > a");
-      }
 
       presenceData.state = title.textContent;
       presenceData.startTimestamp = browsingStamp;
@@ -459,7 +467,7 @@ presence.on("UpdateData", async () => {
       );
       presenceData.smallImageKey = "reading";
       presenceData.startTimestamp = browsingStamp;
-    } else if (document.URL == "https://www.youtube.com/") {
+    } else if (document.URL === "https://www.youtube.com/") {
       presenceData.details = (await strings).viewHome;
       presenceData.startTimestamp = browsingStamp;
     } else if (document.location.pathname.includes("/upload")) {
@@ -496,13 +504,11 @@ presence.on("UpdateData", async () => {
       delete presenceData.endTimestamp;
     }
 
-    if (presenceData.details == null) {
+    if (!presenceData.details) {
       presence.setTrayTitle();
       presence.setActivity();
-    } else {
-      presence.setActivity(presenceData);
-    }
-  } else if (document.location.hostname == "studio.youtube.com") {
+    } else presence.setActivity(presenceData);
+  } else if (document.location.hostname === "studio.youtube.com") {
     const presenceData: PresenceData = {
         largeImageKey: "yt_lg",
         smallImageKey: "studio",
@@ -561,11 +567,9 @@ presence.on("UpdateData", async () => {
       delete presenceData.endTimestamp;
     }
 
-    if (presenceData.details == null) {
+    if (!presenceData.details) {
       presence.setTrayTitle();
       presence.setActivity();
-    } else {
-      presence.setActivity(presenceData);
-    }
+    } else presence.setActivity(presenceData);
   }
 });

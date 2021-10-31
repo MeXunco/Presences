@@ -10,9 +10,9 @@ presence.on("UpdateData", async () => {
     privacy = await presence.getSetting("privacy"),
     sprivacy = await presence.getSetting("super-privacy");
   presenceData.startTimestamp = browsingStamp;
-  if (sprivacy || window.location.host === "kaniwork.com:8080") {
+  if (sprivacy || window.location.host === "kaniwork.com:8080")
     presenceData.details = "Browsing";
-  } else {
+  else {
     const path = window.location.pathname.replace(".php", "");
     if (path.endsWith("commandes")) {
       presenceData.details = "Viewing a page:";
@@ -44,9 +44,8 @@ presence.on("UpdateData", async () => {
         presenceData.state = "with the KaniShiel's dashboard";
       } else {
         presenceData.details = "Using the KaniShiel's dashboard of :";
-        presenceData.state = document.getElementById(
-          "563749920683720709"
-        ).textContent;
+        presenceData.state =
+          document.getElementById("563749920683720709").textContent;
       }
     } else {
       presenceData.details = "Viewing a page:";
@@ -54,10 +53,8 @@ presence.on("UpdateData", async () => {
     }
   }
 
-  if (presenceData.details == null) {
+  if (!presenceData.details) {
     presence.setTrayTitle();
     presence.setActivity();
-  } else {
-    presence.setActivity(presenceData);
-  }
+  } else presence.setActivity(presenceData);
 });

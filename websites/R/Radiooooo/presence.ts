@@ -24,19 +24,19 @@ presence.on("UpdateData", async () => {
 
   if (audio) {
     const timestamps = presence.getTimestampsfromMedia(audio),
-      paused = audio.paused,
+      { paused } = audio,
       title = document.querySelector("div.info > div.title").textContent,
-      artist = document.querySelector("div.field.artist > span:nth-child(2)")
-        .textContent,
+      artist = document.querySelector(
+        "div.field.artist > span:nth-child(2)"
+      ).textContent,
       place = document.querySelector("div.head > div.place").textContent,
       year = document.querySelector("div.head > div.year").textContent,
       songDetails = await presence.getSetting("song_1"),
       songState = await presence.getSetting("song_2"),
       newLang = await presence.getSetting("lang");
 
-    if (!oldLang) {
-      oldLang = newLang;
-    } else if (oldLang !== newLang) {
+    oldLang ??= newLang;
+    if (oldLang !== newLang) {
       oldLang = newLang;
       strings = getStrings();
     }
@@ -57,8 +57,7 @@ presence.on("UpdateData", async () => {
       .replace("%place%", place)
       .replace("%year%", year);
 
-    presenceData.startTimestamp = timestamps[0];
-    presenceData.endTimestamp = timestamps[1];
+    [presenceData.startTimestamp, presenceData.endTimestamp] = timestamps;
 
     if (paused) {
       delete presenceData.startTimestamp;

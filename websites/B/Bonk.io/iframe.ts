@@ -25,11 +25,9 @@ const iframe = new iFrame(),
   selector = menuIDs
     .map(
       (id) =>
-        "#" +
-        id +
-        '[style*="visibility: inherit"]' +
+        `#${id}[style*="visibility: inherit"]` +
         "," +
-        ("#" + id + '[style*="display: block"]')
+        `#${id}[style*="display: block"]`
     )
     .join(",");
 
@@ -53,12 +51,12 @@ document.querySelector("#roomlistjoinbutton").addEventListener("click", () => {
 
 iframe.on("UpdateData", async () => {
   const element = document.querySelector(selector),
-    lobbyGameMode = document.querySelector("#newbonklobby_modetext")
-      ?.textContent,
-    state =
-      document.querySelector("#pretty_top_name").textContent +
-      " - " +
-      document.querySelector("#pretty_top_level").textContent,
+    lobbyGameMode = document.querySelector(
+      "#newbonklobby_modetext"
+    )?.textContent,
+    state = `${document.querySelector("#pretty_top_name").textContent} - ${
+      document.querySelector("#pretty_top_level").textContent
+    }`,
     playerCount = document.querySelectorAll(".newbonklobby_playerentry").length;
 
   if (element?.id === "newbonklobby") lastGameMode = lobbyGameMode;
